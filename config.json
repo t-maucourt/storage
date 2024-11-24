@@ -1,0 +1,6 @@
+{
+    "storage": {
+        "type": "filesystem",
+        "root_path": "./attachments"
+    }
+}
