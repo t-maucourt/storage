@@ -2,21 +2,26 @@ package persistable
 
 import (
 	"encoding/json"
-	"gofun/cmd/persistable/filesystem"
-	"gofun/cmd/persistable/s3"
 	"io"
 	"log"
 	"os"
-	"strings"
 )
 
 const (
 	FILESYSTEM = "filesystem"
 	S3         = "s3"
+	SSH        = "ssh"
 )
 
-type configuration struct {
-	Storage map[string]string `json:"storage"`
+type Configuration struct {
+	Storage storage `json:"storage"`
+}
+
+type storageSettings map[string]any
+
+type storage struct {
+	Type     string          `json:"type"`
+	Settings storageSettings `json:"settings"`
 }
 
 func GetStorageFromConfiguration(configFilePath string) Persistable {
@@ -31,29 +36,24 @@ func GetStorageFromConfiguration(configFilePath string) Persistable {
 	if err != nil {
 		log.Fatalf("can't read the configuration file data - %s", err)
 	}
-	var config configuration
 
+	var config Configuration
 	if err = json.Unmarshal(fileContent, &config); err != nil {
 		log.Fatalf("can't unmarshal data from configuration file")
 	}
 
-	storageType := config.Storage["type"]
+	storageType := config.Storage.Type
 	if storageType == "" {
 		log.Fatalf("no storage type found in the configuration file")
 	}
 
-	storageType = strings.ToLower(storageType)
-
-	var storageSystem Persistable
+	var storageSystemBuilder func(storageSettings) Persistable
 	switch storageType {
 	case FILESYSTEM:
-		storageSystem = filesystem.NewfileSystemStorage(config.Storage["root_path"])
-	case S3:
-		storageSystem = s3.NewS3Storage(config.Storage["bucket"])
+		storageSystemBuilder = NewfileSystemStorage
 	default:
-		log.Fatalf("storage system %s not found", config.Storage["type"])
+		log.Fatalf("storage system %s not found", config.Storage.Type)
 	}
 
-	return storageSystem
-
+	return storageSystemBuilder(config.Storage.Settings)
 }

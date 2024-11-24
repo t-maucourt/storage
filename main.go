@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"gofun/cmd/persistable"
+	"log"
 )
 
 func main() {
@@ -11,9 +12,14 @@ func main() {
 
 	s := persistable.GetStorageFromConfiguration("config.json")
 
-	err := s.Save(dataToSave, filePath)
-	fmt.Println(err)
+	if err := s.Save(dataToSave, filePath); err != nil {
+		log.Printf("Failed to save data: %s\n", err)
+	}
+
 	data, err := s.Load(filePath)
-	fmt.Println(err)
+	if err != nil {
+		log.Printf("Failed to load data: %s\n", err)
+	}
+
 	fmt.Println(string(data))
 }

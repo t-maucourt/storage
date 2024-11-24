@@ -1,4 +1,4 @@
-package filesystem
+package persistable
 
 import (
 	"fmt"
@@ -14,7 +14,8 @@ type fileSystemStorage struct {
 	rootPath string
 }
 
-func NewfileSystemStorage(rootPath string) *fileSystemStorage {
+func NewfileSystemStorage(settings storageSettings) Persistable {
+	rootPath := settings["root_path"].(string)
 	log.Printf("New FileSystem storage targeting root path %s\n", rootPath)
 	return &fileSystemStorage{rootPath}
 }
@@ -28,8 +29,6 @@ func (f *fileSystemStorage) Save(b []byte, args ...any) error {
 
 	dirPath, fileName := extractDirPathFromFilePath(filePath)
 
-	fmt.Println(dirPath, fileName)
-
 	dirPath = filepath.Join(f.rootPath, dirPath)
 	if err := os.MkdirAll(dirPath, 0777); err != nil {
 		return fmt.Errorf("can't create directories tree %s : %v", dirPath, err)
@@ -41,6 +40,7 @@ func (f *fileSystemStorage) Save(b []byte, args ...any) error {
 	if err != nil {
 		return fmt.Errorf("can't open the file %s : %v", filePath, err)
 	}
+	defer file.Close()
 
 	_, err = file.Write(b)
 	if err != nil {

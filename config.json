@@ -1,6 +1,8 @@
 {
     "storage": {
         "type": "filesystem",
-        "root_path": "./attachments"
+        "settings": {
+            "root_path": "./attachments"
+        }
     }
 }
